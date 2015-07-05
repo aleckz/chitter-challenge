@@ -6,6 +6,7 @@ require_relative 'data_mapper_setup'
 
 class Chitter < Sinatra::Base
   set :views, proc {File.join(root,'.', 'views')}
+  
   enable :sessions
   set :session_secret, 'super secret'
 
@@ -16,7 +17,7 @@ class Chitter < Sinatra::Base
   end
 
   get '/peeps' do
-    @peeps = Peep.all(:order => [ :created_at.desc])
+    @peeps = Peep.all # (:order => [ :timestamp.desc])
     erb :'peeps/index'
   end
 
@@ -25,7 +26,8 @@ class Chitter < Sinatra::Base
   end
 
   post '/peeps' do
-    Peep.create(title: params[:title], message: params[:message])
+    Peep.create(title: params[:title], 
+                message: params[:message])
     redirect to '/peeps'
   end
 
@@ -40,23 +42,26 @@ class Chitter < Sinatra::Base
                      email: params[:email],
                      password: params[:password],
                      password_confirmation: params[:password_confirmation])
-    @user.id = session[:user_id] 
     if @user.save
       @user_id = session[:user_id]
       redirect to '/'
     else
-      flash.now[:notice] = "password and confirmation password do not match"
+      flash.now[:notice] = @user.errors.full_messages
       erb :'/users/new'
     end
   end
 
+  get '/sessions/new' do
+    erb :'sessions/new'
+  end
 
-helpers do
 
-def current_user
- @user ||= User.get(session[:user_id])
-end
+  helpers do
 
-end
+    def current_user
+     @user ||= User.get(session[:user_id])
+    end
+
+  end
 
 end
